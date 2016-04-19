@@ -98,9 +98,19 @@ TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overri
     var offset = lineWidth / 2;
     var currentLine = null;
 
+    // if (this.tableNode.table.borderLines) {
+    //      var borderLines = this.tableNode.table.borderLines;
+    //      shouldDrawLine = borderLines[lineIndex][i] == 1;
+    // }
+
     for(var i = 0, l = this.rowSpanData.length; i < l; i++) {
       var data = this.rowSpanData[i];
       var shouldDrawLine = !data.rowSpan;
+
+    if (this.tableNode.table.borderLines) {
+       var borderLines = this.tableNode.table.borderLines;
+       shouldDrawLine = borderLines[lineIndex][i] == 1;
+    }
 
       if (!currentLine && shouldDrawLine) {
         currentLine = { left: data.left, width: 0 };
@@ -192,9 +202,9 @@ TableProcessor.prototype.endRow = function(rowIndex, writer, pageBreaks) {
       var y1 = ys[yi].y0;
       var y2 = ys[yi].y1;
 
-			if(willBreak) {
-				y2 = y2 + this.rowPaddingBottom;
-			}
+      if(willBreak) {
+        y2 = y2 + this.rowPaddingBottom;
+      }
 
       if (writer.context().page != ys[yi].page) {
         writer.context().page = ys[yi].page;
@@ -205,7 +215,13 @@ TableProcessor.prototype.endRow = function(rowIndex, writer, pageBreaks) {
       }
 
       for(i = 0, l = xs.length; i < l; i++) {
-        this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer);
+        var shouldDrawCol = true;
+        if (this.tableNode.table.borderCols) {
+          var borderCols = this.tableNode.table.borderCols;
+          shouldDrawCol = borderCols[rowIndex][i] == 1;
+        }
+        if (shouldDrawCol) { this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer); }
+        // this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer);
         if(i < l-1) {
           var colIndex = xs[i].index;
           var fillColor=  this.tableNode.table.body[rowIndex][colIndex].fillColor;
