@@ -142,8 +142,10 @@ TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overri
   }
 };
 
-TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writer) {
-  var width = this.layout.vLineWidth(vLineIndex, this.tableNode);
+TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writer, rowIndex) {
+  var width = this.layout.vLineWidth(vLineIndex, this.tableNode, rowIndex);
+
+  console.log('test vert');
   if (width === 0) return;
   writer.addVector({
     type: 'line',
@@ -152,7 +154,7 @@ TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writ
     y1: y0,
     y2: y1,
     lineWidth: width,
-    lineColor: typeof this.layout.vLineColor === 'function' ? this.layout.vLineColor(vLineIndex, this.tableNode) : this.layout.vLineColor
+    lineColor: typeof this.layout.vLineColor === 'function' ? this.layout.vLineColor(vLineIndex, this.tableNode, rowIndex) : this.layout.vLineColor
   }, false, true);
 };
 
@@ -220,13 +222,15 @@ TableProcessor.prototype.endRow = function(rowIndex, writer, pageBreaks) {
           var borderCols = this.tableNode.table.borderCols;
           shouldDrawCol = borderCols[rowIndex][i] == 1;
         }
-        if (shouldDrawCol) { this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer); }
+        if (shouldDrawCol) { 
+            this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer, rowIndex); 
+        }
         // this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer);
         if(i < l-1) {
           var colIndex = xs[i].index;
           var fillColor=  this.tableNode.table.body[rowIndex][colIndex].fillColor;
           if(fillColor ) {
-            var wBorder = this.layout.vLineWidth(colIndex, this.tableNode);
+            var wBorder = this.layout.vLineWidth(colIndex, this.tableNode, rowIndex);
             var xf = xs[i].x+wBorder;
             var yf = y1 - hzLineOffset;
             writer.addVector({
