@@ -74,9 +74,9 @@ TableProcessor.prototype.onRowBreak = function(rowIndex, writer) {
 };
 
 TableProcessor.prototype.beginRow = function(rowIndex, writer) {
-  this.topLineWidth = this.layout.hLineWidth(rowIndex, this.tableNode);
+  this.topLineWidth = this.layout.hLineWidth(rowIndex, this.tableNode, 0);
   this.rowPaddingTop = this.layout.paddingTop(rowIndex, this.tableNode);
-  this.bottomLineWidth = this.layout.hLineWidth(rowIndex+1, this.tableNode);
+  this.bottomLineWidth = this.layout.hLineWidth(rowIndex+1, this.tableNode,1);
   this.rowPaddingBottom = this.layout.paddingBottom(rowIndex, this.tableNode);
 
   this.rowCallback = this.onRowBreak(rowIndex, writer);
@@ -93,26 +93,21 @@ TableProcessor.prototype.beginRow = function(rowIndex, writer) {
 };
 
 TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overrideY) {
-  var lineWidth = this.layout.hLineWidth(lineIndex, this.tableNode);
-  if (lineWidth) {
-    var offset = lineWidth / 2;
+  // if (true) {
     var currentLine = null;
-
-    // if (this.tableNode.table.borderLines) {
-    //      var borderLines = this.tableNode.table.borderLines;
-    //      shouldDrawLine = borderLines[lineIndex][i] == 1;
-    // }
-
+    var maxWidth = 1000000;
     for(var i = 0, l = this.rowSpanData.length; i < l; i++) {
+      var lineWidth = this.layout.hLineWidth(lineIndex, this.tableNode, i);
+
+      if (lineWidth < maxWidth) { maxWidth = lineWidth; }
+
+      var offset = lineWidth / 2;
       var data = this.rowSpanData[i];
       var shouldDrawLine = !data.rowSpan;
 
-    if (this.tableNode.table.borderLines) {
-       var borderLines = this.tableNode.table.borderLines;
-       shouldDrawLine = borderLines[lineIndex][i] == 1;
-    }
+      // shouldDrawLine = lineWidth > 0;
 
-      if (!currentLine && shouldDrawLine) {
+      if (!currentLine) {
         currentLine = { left: data.left, width: 0 };
       }
 
@@ -122,7 +117,7 @@ TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overri
 
       var y = (overrideY || 0) + offset;
 
-      if (!shouldDrawLine || i === l - 1) {
+      if (shouldDrawLine) {
         if (currentLine) {
           writer.addVector({
             type: 'line',
@@ -131,19 +126,20 @@ TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overri
             y1: y,
             y2: y,
             lineWidth: lineWidth,
-            lineColor: typeof this.layout.hLineColor === 'function' ? this.layout.hLineColor(lineIndex, this.tableNode) : this.layout.hLineColor
+            lineColor: typeof this.layout.hLineColor === 'function' ? this.layout.hLineColor(lineIndex, this.tableNode, i) : this.layout.hLineColor
           }, false, overrideY);
           currentLine = null;
         }
       }
     }
 
-    writer.context().moveDown(lineWidth);
-  }
+    writer.context().moveDown(maxWidth);
+  // }
 };
 
-TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writer) {
-  var width = this.layout.vLineWidth(vLineIndex, this.tableNode);
+TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writer, rowIndex) {
+  var width = this.layout.vLineWidth(vLineIndex, this.tableNode, rowIndex);
+
   if (width === 0) return;
   writer.addVector({
     type: 'line',
@@ -152,7 +148,7 @@ TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writ
     y1: y0,
     y2: y1,
     lineWidth: width,
-    lineColor: typeof this.layout.vLineColor === 'function' ? this.layout.vLineColor(vLineIndex, this.tableNode) : this.layout.vLineColor
+    lineColor: typeof this.layout.vLineColor === 'function' ? this.layout.vLineColor(vLineIndex, this.tableNode, rowIndex) : this.layout.vLineColor
   }, false, true);
 };
 
@@ -215,18 +211,13 @@ TableProcessor.prototype.endRow = function(rowIndex, writer, pageBreaks) {
       }
 
       for(i = 0, l = xs.length; i < l; i++) {
-        var shouldDrawCol = true;
-        if (this.tableNode.table.borderCols) {
-          var borderCols = this.tableNode.table.borderCols;
-          shouldDrawCol = borderCols[rowIndex][i] == 1;
-        }
-        if (shouldDrawCol) { this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer); }
-        // this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer);
+
+        this.drawVerticalLine(xs[i].x, y1 - hzLineOffset, y2 + this.bottomLineWidth, xs[i].index, writer, rowIndex);
         if(i < l-1) {
           var colIndex = xs[i].index;
           var fillColor=  this.tableNode.table.body[rowIndex][colIndex].fillColor;
           if(fillColor ) {
-            var wBorder = this.layout.vLineWidth(colIndex, this.tableNode);
+            var wBorder = this.layout.vLineWidth(colIndex, this.tableNode, rowIndex);
             var xf = xs[i].x+wBorder;
             var yf = y1 - hzLineOffset;
             writer.addVector({
