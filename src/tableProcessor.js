@@ -93,10 +93,9 @@ TableProcessor.prototype.beginRow = function(rowIndex, writer) {
 };
 
 TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overrideY) {
-  // if (true) {
-    var currentLine = null;
     var maxWidth = 1000000;
     for(var i = 0, l = this.rowSpanData.length; i < l; i++) {
+      var currentLine = null;
       var lineWidth = this.layout.hLineWidth(lineIndex, this.tableNode, i);
 
       if (lineWidth < maxWidth) { maxWidth = lineWidth; }
@@ -105,7 +104,7 @@ TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overri
       var data = this.rowSpanData[i];
       var shouldDrawLine = !data.rowSpan;
 
-      // shouldDrawLine = lineWidth > 0;
+      shouldDrawLine = lineWidth > 0;
 
       if (!currentLine) {
         currentLine = { left: data.left, width: 0 };
@@ -134,7 +133,6 @@ TableProcessor.prototype.drawHorizontalLine = function(lineIndex, writer, overri
     }
 
     writer.context().moveDown(maxWidth);
-  // }
 };
 
 TableProcessor.prototype.drawVerticalLine = function(x, y0, y1, vLineIndex, writer, rowIndex) {
